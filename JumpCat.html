@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Cats</title>
+	<style>
+		.cat{			
+			float: left;
+			overflow: hidden;
+			position: relative;
+			
+			width: 178px;
+			height: 160px;
+		}
+		.cat img{
+			position: absolute;
+			left: 0px;
+			top: 0px;
+		}
+		#forest{
+			width: 800px; 
+			height: 600px; 
+			position: relative;
+			border: 10px;
+			border-style: solid;
+			border-color: #8B4513;
+
+		}
+		#panel{
+			border: 5px;
+			border-style: solid;
+			border-color: #8B4513;
+		}
+		body{
+			background-color: #ADD8E6;
+		}
+	</style>
+
+    <script>
+        class Branch {
+            constructor(id, arrayOfBranch, IsEmpty, b_x, b_y) {
+                this.arrayOfBranch = arrayOfBranch;
+                this.IsEmpty = IsEmpty;
+                this.b_x = b_x;
+                this.b_y = b_y;
+				this.id = id;
+                this.src = "cats/Branch.png";
+            }
+        }
+		
+		
+		
+		class Forest{
+			constructor(){
+				let body = document.getElementsByTagName('body')[0];
+				this.forest = document.createElement("div");
+				this.forest.id = "forest";
+				let img = document.createElement("img");
+				img.src = "cats/Forest.png";
+				this.forest.appendChild(img);
+				body.appendChild(this.forest);
+				
+				this.Branches = new Array();
+				this.CreateBranches();					
+				
+			}
+			CreateBranches(){
+				//vertexes
+                this.Branches.push(new Branch(0, new Array(), true, 11,440));
+                this.Branches.push(new Branch(1, new Array(), true, 211,340));
+                this.Branches.push(new Branch(2, new Array(), true, 411,440));
+                this.Branches.push(new Branch(3, new Array(), true, 411,240));
+                this.Branches.push(new Branch(4, new Array(), true, 611,340));
+                this.Branches.push(new Branch(5, new Array(), true, 611,140));
+                this.Branches.push(new Branch(6, new Array(), true, 411,40));
+                this.Branches.push(new Branch(7, new Array(), true, 211,140));
+				//edges
+				this.Branches[0].arrayOfBranch.push(this.Branches[1]);
+				
+				this.Branches[1].arrayOfBranch.push(this.Branches[0]);
+				this.Branches[1].arrayOfBranch.push(this.Branches[2]);
+				this.Branches[1].arrayOfBranch.push(this.Branches[3]);
+			
+				this.Branches[2].arrayOfBranch.push(this.Branches[1]);
+				this.Branches[2].arrayOfBranch.push(this.Branches[4]);
+				
+				this.Branches[3].arrayOfBranch.push(this.Branches[1]);
+				this.Branches[3].arrayOfBranch.push(this.Branches[4]);
+				this.Branches[3].arrayOfBranch.push(this.Branches[5]);
+				this.Branches[3].arrayOfBranch.push(this.Branches[7]);
+				
+				this.Branches[4].arrayOfBranch.push(this.Branches[2]);
+				this.Branches[4].arrayOfBranch.push(this.Branches[3]);
+				
+				this.Branches[5].arrayOfBranch.push(this.Branches[3]);
+				this.Branches[5].arrayOfBranch.push(this.Branches[6]);
+				
+				this.Branches[6].arrayOfBranch.push(this.Branches[5]);
+				this.Branches[6].arrayOfBranch.push(this.Branches[7]);
+				
+				this.Branches[7].arrayOfBranch.push(this.Branches[6]);
+				this.Branches[7].arrayOfBranch.push(this.Branches[3]);
+
+				//create in DOM
+				for(let b = 0; b < this.Branches.length; b++){
+					let div = document.createElement("div");
+					div.className += "Branch";
+					div.arrayOfBranch = this.Branches[b].arrayOfBranch; //"указатели" на доступные ветки
+					div.style = "position: absolute; left: " + this.Branches[b].b_x + "px; top: " + this.Branches[b].b_y + "px"; //расположение веток в лесу
+					div.b_x = this.Branches[b].b_x;
+					div.b_y = this.Branches[b].b_y;
+					div.id = this.id;
+					div.IsEmpty = this.Branches[b].IsEmpty;
+					let img = document.createElement("img");
+					img.src = this.Branches[b].src;
+					div.appendChild(img);
+					this.forest.appendChild(div);
+				};
+			}
+
+		}
+
+        class Cat {
+
+            constructor(name, src, place) {
+				this.name = name;
+				this.src = src;
+				this.place = place;
+			}
+				
+			activate(forest){
+				this.div = document.createElement("div");
+				this.div.className = "cat";
+				forest.Branches[this.place].IsEmpty = false;
+				let img = document.createElement("img");
+				img.src = this.src;
+				img.id = this.name;
+				img.draggable = "false";
+				img.style.left = "0px";
+				img.style.top = "0px";
+				this.img = img;
+				this.div.appendChild(img);
+				//расположение кота по номеру ветки
+				this.div.style = "position: absolute; left: " + forest.Branches[this.place].b_x + "px; top: " + (forest.Branches[this.place].b_y) + "px";
+				//добавить кота в DOM
+				let f = document.getElementById("forest");
+				f.appendChild(this.div);
+				
+				this.div.onclick = (e) => {
+					for(let i = 0; i < forest.Branches[this.place].arrayOfBranch.length; i++){
+						let n = forest.Branches[this.place].arrayOfBranch[i].id;
+						if(forest.Branches[n].IsEmpty){						
+							this.Jump(this.place, n, forest);
+							break;
+						}
+					}
+				}
+			}
+			Jump(lastBranch, newBranch, forest){
+
+					let cat = this; //запомнили текущего кота
+					forest.Branches[lastBranch].IsEmpty = true; //предыдущая ветка стала пустой
+					forest.Branches[newBranch].IsEmpty = false; //новая ветка стала занята
+					this.place = forest.Branches[newBranch].id; //кот сидит на ветке с новым номером
+					
+					let x = forest.Branches[lastBranch].b_x; // х последней ветки
+					let y = forest.Branches[lastBranch].b_y; // у последней ветки
+					let newX = forest.Branches[newBranch].b_x; //х новой ветки
+					let newY = forest.Branches[newBranch].b_y; //у новой ветки		
+
+					let path = 5;
+					cat.img.style.left = "0px";
+
+					if(newX - x > 0){
+						if(newY -y < 0){
+							path = 1;
+						} else {
+							path = 2;
+							cat.img.style.transform = "rotate(15deg)";
+						}
+					} else{
+						if(newY - y > 0){
+							path = 3;
+							cat.img.style.transform = "rotate(15deg)";
+							
+						} else{
+							path = 4;
+						}
+					}
+					
+					let l = document.getElementById(cat.name).style.left;
+					let left = cat.img.style.left;
+					let t = document.getElementById(cat.name).style.top;					
+					let changeLeft = l.substring(0, l.length - 2);
+					let changeTop = t.substring(0, t.length - 2);
+					let changeRight = 1246;
+										
+					let i = 0;
+					let start = Date.now();						
+					let timer = setInterval(function () {
+						let timePassed = Date.now() - start;
+						if(timePassed >= 1000){
+							clearInterval(timer);
+							return;
+						}	
+												
+						i++;
+						if(i % 7 ==0){
+							if(changeLeft <= -1246) {						
+								changeLeft = 0;
+								changeRight = 1246;
+							} else {					
+								changeLeft = changeLeft - 178;
+								changeRight = changeRight + 178;
+							}	
+							cat.img.style.left = changeLeft + "px";
+						}
+						
+					
+						if(path === 1){					
+							cat.img.style.transform = "scaleX(1)";						
+							cat.div.style.transform = "translate(" + timePassed/5 + "px, " + -timePassed/10 + "px)";
+						} else if(path === 2){						
+							cat.img.style.transform = "scaleX(1)";
+							cat.div.style.transform = "translate(" + timePassed/5 + "px, " + timePassed/10 + "px)";
+						} else if(path === 3){						
+							cat.img.style.transform = "scaleX(-1)";								
+							cat.div.style.transform = "translate(" + -timePassed/5 + "px, " + timePassed/10 + "px)";								
+						} else if(path === 4){
+							cat.img.style.transform = "scaleX(-1)";
+							cat.div.style.transform = "translate(" + -timePassed/5 + "px, " + -timePassed/10 + "px)";
+						}
+							
+						if(timePassed >= 980){ 
+							cat.div.style.left = newX + "px";
+							cat.div.style.top = newY + "px";
+							cat.div.style.transform = "translate(0px, 0px)";
+						}
+				
+					}, 20);
+					
+			}
+						
+        }
+
+        class Game {
+            constructor() {
+                let forest = new Forest();
+				
+				let kitty = new Cat("Black", "cats/Black.png", 0);
+				kitty.activate(forest);
+                let kitty2 = new Cat("Brown", "cats/Brown.png", 6);
+				kitty2.activate(forest);
+				let kitty3 = new Cat("Blue", "cats/Blue.png", 7);
+				kitty3.activate(forest);
+				
+            }
+        }
+
+		onload = () => new Game();
+		
+    </script>
+</head>
+<body>
+</body>
+</html>
